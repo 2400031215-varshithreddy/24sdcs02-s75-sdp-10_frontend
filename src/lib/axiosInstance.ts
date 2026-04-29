@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = "http://localhost:8080";
+const API_BASE = "https://24sdcs02-s75-sdp-10-backend-production.up.railway.app";
 
 const axiosInstance = axios.create({
   baseURL: API_BASE,
