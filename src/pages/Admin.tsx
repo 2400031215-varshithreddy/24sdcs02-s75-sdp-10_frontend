@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, TrendingUp, Brain, Code, Network, BarChart3, ShieldCheck, Activity, Globe, Database, ArrowRight, Zap, Radio } from "lucide-react";
-import { apiGet } from "@/lib/api";
+import { Users, TrendingUp, Brain, Code, Network, BarChart3, ShieldCheck, Globe, ArrowRight, Zap, Radio, Plus, Edit2, Trash2, BookOpen } from "lucide-react";
+import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { 
   Chart as ChartJS, 
@@ -15,7 +15,7 @@ import {
   ArcElement
 } from 'chart.js';
 import { Bar, PolarArea } from 'react-chartjs-2';
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, RadialLinearScale, ArcElement);
 
@@ -72,22 +72,78 @@ const LiveActivityFeed = () => {
 export default function Admin() {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<AdminStats>({ 
     totalUsers: 0, 
     averageScores: { Analytical: 0, Creative: 0, Technical: 0, Social: 0 } 
   });
+  const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState<'dashboard' | 'problems' | 'courses'>('dashboard');
+  
+  // Management States
+  const [problems, setProblems] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
+
+  const fetchData = async () => {
+    try {
+      const [statsRes, problemsRes, coursesRes] = await Promise.all([
+        apiGet<AdminStats>("/api/admin/stats"),
+        apiGet<any[]>("/api/admin/problems"),
+        apiGet<any[]>("/api/admin/courses")
+      ]);
+      setStats(statsRes);
+      setProblems(problemsRes);
+      setCourses(coursesRes);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (role !== "ADMIN") { 
       navigate("/"); 
       return; 
     }
-    apiGet<AdminStats>("/api/admin/stats")
-      .then(setStats)
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    fetchData();
   }, [navigate, role]);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (activeView === 'problems') {
+        if (editingItem) {
+          await apiPut(`/api/admin/problems/${editingItem.id}`, formData);
+        } else {
+          await apiPost("/api/admin/problems", formData);
+        }
+      } else if (activeView === 'courses') {
+        if (editingItem) {
+          await apiPut(`/api/admin/courses/${editingItem.id}`, formData);
+        } else {
+          await apiPost("/api/admin/courses", formData);
+        }
+      }
+      setShowModal(false);
+      fetchData();
+    } catch (err) {
+      alert("Action failed: " + err);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Confirm permanent deletion?")) return;
+    try {
+      if (activeView === 'problems') await apiDelete(`/api/admin/problems/${id}`);
+      else await apiDelete(`/api/admin/courses/${id}`);
+      fetchData();
+    } catch (err) {
+      alert("Delete failed: " + err);
+    }
+  };
 
   const chartData = {
     labels: ['Analytical', 'Creative', 'Technical', 'Social'],
@@ -210,22 +266,29 @@ export default function Admin() {
         </div>
         
         <div className="flex gap-4">
-           <div className="px-8 py-4 rounded-3xl bg-white/5 border border-white/10 flex items-center gap-5 magnetic-pulse">
-              <Activity size={20} className="text-emerald-400 animate-pulse" />
-              <div className="flex flex-col">
-                 <span className="text-[9px] font-black uppercase tracking-widest text-text-tertiary">Grid Health</span>
-                 <span className="text-sm font-black text-white">OPTIMIZED</span>
-              </div>
-           </div>
-           <div className="px-8 py-4 rounded-3xl bg-white/5 border border-white/10 flex items-center gap-5">
-              <Database size={20} className="text-accent-blue" />
-              <div className="flex flex-col">
-                 <span className="text-[9px] font-black uppercase tracking-widest text-text-tertiary">Sync Latency</span>
-                 <span className="text-sm font-black text-white">4ms</span>
-              </div>
-           </div>
+           <button 
+             onClick={() => setActiveView('dashboard')}
+             className={`px-8 py-4 rounded-3xl border transition-all flex items-center gap-4 ${activeView === 'dashboard' ? 'bg-accent text-primary border-accent shadow-glow' : 'bg-white/5 border-white/10 text-text-tertiary hover:text-white'}`}
+           >
+              <BarChart3 size={18} /> Dashboard
+           </button>
+           <button 
+             onClick={() => setActiveView('problems')}
+             className={`px-8 py-4 rounded-3xl border transition-all flex items-center gap-4 ${activeView === 'problems' ? 'bg-accent text-primary border-accent shadow-glow' : 'bg-white/5 border-white/10 text-text-tertiary hover:text-white'}`}
+           >
+              <Code size={18} /> Problems
+           </button>
+           <button 
+             onClick={() => setActiveView('courses')}
+             className={`px-8 py-4 rounded-3xl border transition-all flex items-center gap-4 ${activeView === 'courses' ? 'bg-accent text-primary border-accent shadow-glow' : 'bg-white/5 border-white/10 text-text-tertiary hover:text-white'}`}
+           >
+              <BookOpen size={18} /> Courses
+           </button>
         </div>
       </motion.div>
+
+      {activeView === 'dashboard' ? (
+        <>
 
       {/* Grid Connectivity Units */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -327,6 +390,133 @@ export default function Admin() {
            ))}
         </motion.div>
       </div>
+        </>
+      ) : (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+           <div className="flex items-center justify-between">
+              <h3 className="text-3xl font-black uppercase italic tracking-tighter">
+                {activeView === 'problems' ? 'Logic Repository' : 'Knowledge Modules'}
+              </h3>
+              <button 
+                onClick={() => { setEditingItem(null); setFormData({}); setShowModal(true); }}
+                className="btn-premium px-10 h-14 uppercase tracking-widest text-xs"
+              >
+                <Plus size={16} /> New Entry
+              </button>
+           </div>
+
+           <div className="grid grid-cols-1 gap-4">
+              {(activeView === 'problems' ? problems : courses).map((item: any) => (
+                <div key={item.id} className="glass-card-plus p-8 flex items-center justify-between group">
+                   <div className="flex items-center gap-8">
+                      <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-accent/40 transition-colors">
+                         {activeView === 'problems' ? <Code className="text-accent" /> : <BookOpen className="text-accent-blue" />}
+                      </div>
+                      <div>
+                         <h4 className="text-xl font-black text-white">{item.title}</h4>
+                         <p className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mt-1">
+                           {activeView === 'problems' ? `${item.difficulty} / ${item.tags}` : `${item.difficulty} / ${item.durationHours} Units`}
+                         </p>
+                      </div>
+                   </div>
+                   <div className="flex gap-3">
+                      <button 
+                        onClick={() => { setEditingItem(item); setFormData(item); setShowModal(true); }}
+                        className="w-12 h-12 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-text-tertiary hover:text-white hover:bg-white/10 transition-all"
+                      >
+                         <Edit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(item.id)}
+                        className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/10 flex items-center justify-center text-red-400 hover:bg-red-500/20 transition-all"
+                      >
+                         <Trash2 size={16} />
+                      </button>
+                   </div>
+                </div>
+              ))}
+           </div>
+        </motion.div>
+      )}
+
+      {/* Management Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-8">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowModal(false)}
+              className="absolute inset-0 bg-primary/90 backdrop-blur-xl"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-3xl glass-card-plus p-12 border-accent/20"
+            >
+              <h2 className="text-3xl font-black uppercase italic mb-8">
+                {editingItem ? 'Update' : 'Initialize'} {activeView === 'problems' ? 'Problem' : 'Course'}
+              </h2>
+              <form onSubmit={handleSave} className="space-y-6">
+                 <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-black uppercase tracking-widest text-text-tertiary">Title</label>
+                       <input 
+                         required
+                         className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold outline-none focus:border-accent/40"
+                         value={formData.title || ''}
+                         onChange={e => setFormData({...formData, title: e.target.value})}
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-black uppercase tracking-widest text-text-tertiary">Difficulty</label>
+                       <select 
+                         className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold outline-none focus:border-accent/40"
+                         value={formData.difficulty || 'Beginner'}
+                         onChange={e => setFormData({...formData, difficulty: e.target.value})}
+                       >
+                          <option value="Beginner">Beginner / Easy</option>
+                          <option value="Intermediate">Intermediate / Medium</option>
+                          <option value="Advanced">Advanced / Hard</option>
+                       </select>
+                    </div>
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-tertiary">Description</label>
+                    <textarea 
+                      required
+                      className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-6 text-sm font-medium outline-none focus:border-accent/40 resize-none"
+                      value={formData.description || ''}
+                      onChange={e => setFormData({...formData, description: e.target.value})}
+                    />
+                 </div>
+                 {activeView === 'problems' && (
+                   <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                         <label className="text-[9px] font-black uppercase tracking-widest text-text-tertiary">Tags (comma-separated)</label>
+                         <input 
+                           className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold outline-none focus:border-accent/40"
+                           value={formData.tags || ''}
+                           onChange={e => setFormData({...formData, tags: e.target.value})}
+                         />
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[9px] font-black uppercase tracking-widest text-text-tertiary">Constraints</label>
+                         <input 
+                           className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold outline-none focus:border-accent/40"
+                           value={formData.constraints || ''}
+                           onChange={e => setFormData({...formData, constraints: e.target.value})}
+                         />
+                      </div>
+                   </div>
+                 )}
+                 <div className="flex gap-4 pt-8">
+                    <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-16 rounded-2xl border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/5 transition-all">Abort</button>
+                    <button type="submit" className="flex-[2] h-16 btn-premium text-[10px] font-black uppercase tracking-widest shadow-glow">Finalize Change</button>
+                 </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

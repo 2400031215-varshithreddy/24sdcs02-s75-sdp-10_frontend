@@ -1,4 +1,3 @@
-import { Compass, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface LogoProps {

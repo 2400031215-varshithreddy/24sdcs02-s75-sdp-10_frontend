@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost } from "@/lib/api";
-import { ArrowLeft, ArrowRight, CheckCircle, Target, AlertCircle, Sparkles, BrainCircuit } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, AlertCircle, Sparkles, BrainCircuit } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface QuestionDTO {

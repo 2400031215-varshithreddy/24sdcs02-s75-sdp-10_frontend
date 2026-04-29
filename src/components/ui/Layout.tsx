@@ -2,7 +2,7 @@ import { useState, memo } from "react";
 import {
   LogOut, LayoutDashboard, BookOpen, Award, BarChart3,
   Compass, GraduationCap, Building2,
-  Menu, X, Target, Zap, User as UserIcon, ShieldCheck
+  Menu, X, Target, Zap, User as UserIcon, ShieldCheck, Trophy, Code
 } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -27,6 +27,8 @@ const navSections = [
       { label: "Career Paths", path: "/paths", icon: Compass },
       { label: "Skill Quizzes", path: "/quizzes", icon: Zap },
       { label: "Interview Prep", path: "/prep", icon: ShieldCheck },
+      { label: "Code Arena", path: "/practice", icon: Code },
+      { label: "Weekly Clash", path: "/contests", icon: Trophy },
     ],
   },
   {

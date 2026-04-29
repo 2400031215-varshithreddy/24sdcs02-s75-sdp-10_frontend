@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, BookOpen, Briefcase, Clock, ArrowRight, Award, TrendingUp, DollarSign, Sparkles, Target, Zap } from "lucide-react";
 import { apiGet, apiPost } from "@/lib/api";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface PathData {
   path: { id: number; name: string; description: string; avgSalary: string; demandLevel: string };

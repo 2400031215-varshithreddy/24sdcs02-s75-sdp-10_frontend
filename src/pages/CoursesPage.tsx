@@ -25,8 +25,15 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(true);
   const [generatingId, setGeneratingId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
+  const [completedCourses, setCompletedCourses] = useState<number[]>([]);
 
   useEffect(() => {
+    // Load completed courses from localStorage for persistence
+    const saved = localStorage.getItem('completedCourses');
+    if (saved) {
+      setCompletedCourses(JSON.parse(saved));
+    }
+    
     apiGet<CourseItem[]>("/api/courses")
       .then(setCourses)
       .catch(() => {})
@@ -63,6 +70,14 @@ export default function CoursesPage() {
     } finally { 
       setGeneratingId(null); 
     }
+  };
+
+  const toggleCompletion = (courseId: number) => {
+    setCompletedCourses(prev => {
+      const updated = prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId];
+      localStorage.setItem('completedCourses', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const containerVariants = {
@@ -215,19 +230,30 @@ export default function CoursesPage() {
                     </div>
                   </div>
                   
-                  <button
-                    onClick={() => generateCertificate(c.id)}
-                    disabled={generatingId === c.id}
-                    className="btn-premium px-8 py-3.5 text-[9px] uppercase tracking-[0.2em] font-black disabled:opacity-50 shadow-glow group/btn"
-                  >
-                    {generatingId === c.id ? (
-                      <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  <div className="flex items-center gap-3">
+                    {!completedCourses.includes(c.id) ? (
+                      <button
+                        onClick={() => toggleCompletion(c.id)}
+                        className="px-6 py-3.5 rounded-xl border border-white/10 text-[9px] uppercase tracking-widest font-black hover:bg-white/5 transition-all"
+                      >
+                        Complete Module
+                      </button>
                     ) : (
-                      <span className="flex items-center gap-2">
-                         Verify <Award size={14} className="group-hover/btn:scale-110 transition-transform" />
-                      </span>
+                      <button
+                        onClick={() => generateCertificate(c.id)}
+                        disabled={generatingId === c.id}
+                        className="btn-premium px-8 py-3.5 text-[9px] uppercase tracking-[0.2em] font-black disabled:opacity-50 shadow-glow group/btn"
+                      >
+                        {generatingId === c.id ? (
+                          <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                        ) : (
+                          <span className="flex items-center gap-2">
+                             Verify <Award size={14} className="group-hover/btn:scale-110 transition-transform" />
+                          </span>
+                        )}
+                      </button>
                     )}
-                  </button>
+                  </div>
                 </div>
               </motion.div>
             ))}

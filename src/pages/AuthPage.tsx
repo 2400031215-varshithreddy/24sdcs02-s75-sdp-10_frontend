@@ -52,7 +52,7 @@ export default function AuthPage() {
     e.preventDefault();
     setError(""); setSuccess(""); setLoading(true);
     try {
-      const data = await apiPost<{ message: string; role: string; mfaRequired: boolean }>("/api/auth/login", { 
+      const data = await apiPost<{ message: string; role: string; mfaRequired: boolean; token?: string }>("/api/auth/login", { 
         email, 
         password
       });
@@ -61,6 +61,7 @@ export default function AuthPage() {
         setView("mfa");
       } else {
         sessionStorage.removeItem("pending_mfa_email");
+        if (data.token) localStorage.setItem('token', data.token);
         login(data.role);
         navigate("/dashboard");
       }
@@ -89,8 +90,9 @@ export default function AuthPage() {
     e.preventDefault();
     setError(""); setLoading(true);
     try {
-      const data = await apiPost<{ role: string }>("/api/auth/verify-mfa", { email, otp });
+      const data = await apiPost<{ role: string; token?: string }>("/api/auth/verify-mfa", { email, otp });
       sessionStorage.removeItem("pending_mfa_email");
+      if (data.token) localStorage.setItem('token', data.token);
       login(data.role);
       navigate("/dashboard");
     } catch (err: any) {

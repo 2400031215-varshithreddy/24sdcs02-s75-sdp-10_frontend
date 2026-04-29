@@ -1,5 +1,5 @@
-import { GraduationCap, Eye, UserPlus, UserMinus, CheckCircle2, Search, Filter, ShieldCheck, Activity } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Eye, UserPlus, UserMinus, CheckCircle2, Search, Filter, ShieldCheck, Activity } from "lucide-react";
+import { motion } from "framer-motion";
 import { useState } from "react";
 
 export default function Applications() {

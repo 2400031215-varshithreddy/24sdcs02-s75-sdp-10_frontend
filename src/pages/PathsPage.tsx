@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Compass, ArrowRight, Zap, Target, TrendingUp, DollarSign } from "lucide-react";
+import { Compass, ArrowRight, Target, DollarSign } from "lucide-react";
 import { apiGet } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";

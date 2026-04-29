@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Award, ArrowRight, Download, Calendar, ShieldCheck, Sparkles, Zap, Search } from "lucide-react";
+import { Award, ArrowRight, Download, Calendar, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { apiGet } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 

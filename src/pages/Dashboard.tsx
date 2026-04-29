@@ -28,22 +28,34 @@ interface CareerPath {
   demandLevel: string;
 }
 
+interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  xp: number;
+  level: number;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { role } = useAuth();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [paths, setPaths] = useState<CareerPath[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsData, pathsData] = await Promise.all([
+        const [statsData, pathsData, profileData] = await Promise.all([
           role === 'ADMIN' ? apiGet<AdminStats>("/api/admin/stats").catch(() => null) : Promise.resolve(null),
           apiGet<CareerPath[]>("/api/paths").catch(() => []),
+          role === 'STUDENT' ? apiGet<UserProfile>("/api/user/profile").catch(() => null) : Promise.resolve(null),
         ]);
         setStats(statsData);
         setPaths(pathsData);
+        setProfile(profileData);
       } finally {
         setLoading(false);
       }
@@ -76,28 +88,28 @@ export default function Dashboard() {
 
   const studentCards = useMemo(() => [
     {
-      label: "Career Vectors",
-      value: paths.length,
+      label: "Architectural Level",
+      value: profile?.level ?? 1,
       icon: Target,
       color: "text-purple-400",
       bg: "bg-purple-500/10",
       border: "border-purple-500/20"
     },
     {
-      label: "Intelligence Library",
-      value: "120+",
-      icon: BookOpen,
-      color: "text-blue-400",
-      bg: "bg-blue-500/10",
-      border: "border-blue-500/20"
-    },
-    {
-      label: "Global Simulations",
-      value: "45+",
+      label: "Experience Points",
+      value: profile?.xp ?? 0,
       icon: Zap,
       color: "text-amber-400",
       bg: "bg-amber-500/10",
       border: "border-amber-500/20"
+    },
+    {
+      label: "Career Vectors",
+      value: paths.length,
+      icon: Compass,
+      color: "text-blue-400",
+      bg: "bg-blue-500/10",
+      border: "border-blue-500/20"
     },
     {
       label: "Path Reliability",
@@ -107,7 +119,7 @@ export default function Dashboard() {
       bg: "bg-emerald-500/10",
       border: "border-emerald-500/20"
     },
-  ], [paths.length]);
+  ], [profile, paths.length]);
 
   const adminCards = useMemo(() => [
     {
@@ -222,6 +234,42 @@ export default function Dashboard() {
           );
         })}
       </div>
+      
+      {/* Gamification Progress Section */}
+      {role === 'STUDENT' && profile && (
+        <motion.div variants={itemVariants} className="glass-card p-10 bg-gradient-to-r from-accent/10 to-transparent border-l-4 border-l-accent">
+           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+              <div className="space-y-2">
+                 <div className="flex items-center gap-3">
+                    <Zap size={24} className="text-accent animate-pulse" />
+                    <h3 className="text-3xl font-black uppercase tracking-tight italic text-white">Evolution Progress</h3>
+                 </div>
+                 <p className="text-text-tertiary text-sm font-medium">Neural mapping at {Math.round((profile.xp % 1000) / 10)}% of Level {profile.level} capacity.</p>
+              </div>
+              
+              <div className="flex-1 max-w-2xl w-full">
+                 <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-tertiary">Current Node: Lvl {profile.level}</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">Next Sync: Lvl {profile.level + 1}</span>
+                 </div>
+                 <div className="h-4 bg-white/5 rounded-full overflow-hidden border border-white/5 p-1">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(profile.xp % 1000) / 10}%` }}
+                      transition={{ duration: 1.5, ease: "circOut" }}
+                      className="h-full bg-accent rounded-full shadow-glow relative"
+                    >
+                       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20 animate-shimmer" />
+                    </motion.div>
+                 </div>
+                 <div className="flex justify-between mt-3">
+                    <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">{profile.xp} XP Earned</span>
+                    <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">{1000 - (profile.xp % 1000)} XP to Next Node</span>
+                 </div>
+              </div>
+           </div>
+        </motion.div>
+      )}
 
       {/* Bento Grid Actions */}
       <div className="bento-grid">

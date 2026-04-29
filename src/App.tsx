@@ -26,6 +26,10 @@ const Applications = lazy(() => import("./pages/Applications"));
 const CompanyProfile = lazy(() => import("./pages/CompanyProfile"));
 const PrepCenter = lazy(() => import("./pages/PrepCenter"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
+const PracticePage = lazy(() => import("./pages/PracticePage"));
+const ProblemSolverPage = lazy(() => import("./pages/ProblemSolverPage"));
+const ContestsPage = lazy(() => import("./pages/ContestsPage"));
+const ContestArenaPage = lazy(() => import("./pages/ContestArenaPage"));
 
 const PageLoader = () => (
   <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 text-center">
@@ -66,6 +70,10 @@ function App() {
               <Route path="/applications" element={<Applications />} />
               <Route path="/prep" element={<PrepCenter />} />
               <Route path="/profile" element={<CompanyProfile />} />
+              <Route path="/practice" element={<PracticePage />} />
+              <Route path="/practice/:id" element={<ProblemSolverPage />} />
+              <Route path="/contests" element={<ContestsPage />} />
+              <Route path="/contests/:id" element={<ContestArenaPage />} />
               
               {/* Admin-only Routes */}
               <Route element={<ProtectedRoute reqRole="ADMIN" />}>
